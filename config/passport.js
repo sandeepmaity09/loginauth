@@ -2,9 +2,13 @@
 
 // load all the things we need
 var LocalStrategy = require('passport-local').Strategy;
+var FacebookStrategy = require('passport-facebook').Strategy;
 
 // load up the user model
 var User = require('../app/models/user');
+
+// load the auth variables
+var configAuth = require('./auth');
 
 // expose this function to our app using module.exports
 
@@ -27,6 +31,45 @@ module.exports = function(passport){
 			done(err,user);
 		})
 	});
+
+	//==========================================
+	// FACEBOOK ================================
+	//==========================================
+
+	passport.use('facebook',new FacebookStrategy({
+		// pull in our app id and secret from our auth.js
+		clientID : configAuth.facebookAuth.clientID,
+		clientSecret : configAuth.facebookAuth.clientSecret,
+		callbackURL : configAuth.facebookAuth.callbackURL
+	},
+	//facebook will send back the token and profile
+	function(token,refreshToken,profile,done){
+		// asynchronous
+		process.nextTick(function(){
+			User.findOne({'facebook.id':profile.id},function(err,user){
+				if(err)
+					return done(err);
+				if(user) {
+					return done(null,user);
+				} else {
+					var newUser = new User();
+					console.log('this is fb data',profile);
+					newUser.facebook.id = profile.id;
+					newUser.facebook.token = token;
+					// newUser.facebook.name = profile.name.givenName + ' ' + profile.name.familyName; // look at the passport user profile to see how names are return
+					newUser.facebook.name = profile.displayName;
+					// newUser.facebook.email = profile.emails[0].value; // facebook can return multiple emails so we'll take the first one
+				}
+				newUser.save(function(err){
+					if(err)
+						throw err;
+					return done(null,newUser);
+				})
+
+			})
+		})
+	}
+	))
 
 	// =========================================
 	// LOCAL LOGIN==============================

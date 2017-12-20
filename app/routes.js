@@ -9,12 +9,31 @@ module.exports = function(app,passport){
 		res.render('index.ejs');
 	});
 
+
+
+	//=============================
+	// FACEBOOK ROUTES=============
+	//=============================
+
+
+	// route for facebook authentication and login
+	app.get('/auth/facebook',passport.authenticate('facebook',{
+		scope : ['public_profile','email']
+	}));
+
+	// handle the callback after facebook has authenticated the user
+	app.get('/auth/facebook/callback',passport.authenticate('facebook',{
+		successRedirect: '/profile',
+		failureRedirect: '/'
+	}))
+
+
 	//=============================
 	// LOGIN ======================
 	//=============================
 
 	app.get('/login',function(req,res){
-		res.render('login.ejs',{message:req.flash('login')});
+		res.render('login.ejs',{message:req.flash('loginMessage')});
 	});
 
 	// process the login form
@@ -32,7 +51,7 @@ module.exports = function(app,passport){
 	// show the signup form
 
 	app.get('/signup',function(req,res){
-		res.render('signup.ejs',{message:req.flash('signup')});
+		res.render('signup.ejs',{message:req.flash('signupMessage')});
 	});
 
 	// process the sign up form
